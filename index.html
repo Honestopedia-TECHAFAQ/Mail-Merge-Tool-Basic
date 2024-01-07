@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mail Merge Tool</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mt-3 mb-4">Web-Based Mail Merge Tool</h2>
+    <div class="mb-4">
+      <label for="csvFile">Upload CSV File:</label>
+      <input type="file" class="form-control-file" id="csvFile">
+    </div>
+    <div class="mb-4">
+      <label for="emailTemplate">Email Template:</label>
+      <textarea class="form-control" id="emailTemplate" rows="4" placeholder="Type your email template here..."></textarea>
+    </div>
+    <div class="mb-4">
+      <label for="dynamicFields">Dynamic Fields:</label>
+      <input type="text" class="form-control" id="dynamicFields" placeholder="e.g., {{Name}}, {{Company}}, ...">
+    </div>
+    <div class="mb-4">
+      <label for="greetings">Personalized Greetings:</label>
+      <input type="text" class="form-control" id="greetings" placeholder="e.g., Dear {{Name}}, ...">
+    </div>
+    <div class="mb-4">
+      <label for="attachments">Attachments:</label>
+      <input type="file" class="form-control-file" id="attachments" multiple>
+    </div>
+    <button class="btn btn-primary mb-4" onclick="mergeAndSend()">Merge and Send</button>
+    <div id="result" class="mb-4"></div>
+    <div class="mb-4">
+      <label for="exportFormat">Export Format:</label>
+      <select class="form-control" id="exportFormat">
+        <option value="zip">ZIP</option>
+        <option value="word">Word</option>
+        <option value="pdf">PDF</option>
+      </select>
+    </div>
+    <button class="btn btn-success" onclick="exportData()">Export</button>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script>
+    emailjs.init("");
+
+    function mergeAndSend() {
+      var csvFile = document.getElementById('csvFile').files[0];
+      var emailTemplate = document.getElementById('emailTemplate').value;
+      var dynamicFields = document.getElementById('dynamicFields').value;
+      var personalizedGreetings = document.getElementById('greetings').value;
+      var attachments = document.getElementById('attachments').files;
+      for (var i = 0; i < 10; i++) {
+        var mergedEmailContent = generateMergedEmail(dynamicFields, personalizedGreetings, emailTemplate);
+        sendEmail(mergedEmailContent, attachments);
+      }
+
+      document.getElementById('result').innerHTML = 'Emails sent successfully!';
+    }
+
+    function generateMergedEmail(dynamicFields, greetings, emailTemplate) {
+      return emailTemplate
+        .replace('{{DynamicFields}}', dynamicFields)
+        .replace('{{Greetings}}', greetings);
+    }
+
+    function sendEmail(emailContent, attachments) {
+      var emailParams = {
+        to: 'honestopedia@gmail.com',
+        subject: 'Your Subject',
+        message: emailContent
+      };
+
+      var emailAttachments = [];
+      for (var i = 0; i < attachments.length; i++) {
+        emailAttachments.push({
+          name: attachments[i].name,
+          data: attachments[i]
+        });
+      }
+
+      emailParams.attachments = emailAttachments;
+
+      emailjs.send('default_service', 'template_id', emailParams)
+        .then(function(response) {
+          console.log('Email sent:', response);
+        }, function(error) {
+          console.error('Email sending failed:', error);
+        });
+    }
+
+    function exportData() {
+      fetch('/exportData', {
+        method: 'POST',
+        body: JSON.stringify({ exportFormat: document.getElementById('exportFormat').value }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('result').innerHTML = data;
+      })
+      .catch(error => {
+        console.error('Error during export:', error);
+        document.getElementById('result').innerHTML = 'Error during export.';
+      });
+    }
+  </script>
+</body>
+</html>
